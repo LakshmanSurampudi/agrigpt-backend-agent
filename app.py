@@ -34,7 +34,7 @@ if langsmith_api_key:
     os.environ["LANGCHAIN_PROJECT"] = "agrigpt-backend-agent"
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8011")
+MCP_BASE_URL = os.getenv("MCP_BASE_URL", "https://agrigpt-backend-mcp.onrender.com")
 MCP_API_KEY = os.getenv("MCP_API_KEY")
 MCP_TIMEOUT = 10.0
 
@@ -47,15 +47,15 @@ class MCPClient:
         self.base_url = base_url.rstrip("/")
         self.headers = {"Content-Type": "application/json"}
 
-        if api_key:
-            self.headers["Authorization"] = f"Bearer {api_key}"
+        #if api_key:
+        #    self.headers["Authorization"] = f"Bearer {api_key}"
 
         self.client = httpx.Client(timeout=MCP_TIMEOUT)
 
     def list_tools(self) -> List[Dict[str, Any]]:
-        print(f"📡 Calling MCP server: {self.base_url}/tools/list")
+        print(f"📡 Calling MCP server: {self.base_url}/getToolsList")
         response = self.client.post(
-            f"{self.base_url}/tools/list",
+            f"{self.base_url}/getToolsList",
             headers=self.headers,
             json={}
         )
@@ -67,7 +67,7 @@ class MCPClient:
     def call_tool(self, name: str, arguments: Dict[str, Any]) -> Any:
         print(f"🔧 Calling MCP tool: {name} with args: {arguments}")
         response = self.client.post(
-            f"{self.base_url}/tools/call",
+            f"{self.base_url}/callTool",
             headers=self.headers,
             json={
                 "name": name,
@@ -214,7 +214,7 @@ def build_agent():
 
 # Build agent once at startup
 print("\n🚀 BUILDING AGENT AT STARTUP...")
-#app_agent = build_agent()
+app_agent = build_agent()
 print("✅ AGENT BUILD COMPLETE\n")
 
 # ============================================================
@@ -237,25 +237,25 @@ def chat(request: ChatRequest):
     print("🌟"*30 + "\n")
 
     try:
-        # result = app_agent.invoke({
-        #    "messages": [HumanMessage(content=request.message)]
-        # )
+        result = app_agent.invoke({
+           "messages": [HumanMessage(content=request.message)]
+        })
 
-        # print("\n" + "="*60)
-        # print("📊 AGENT EXECUTION COMPLETE")
-        # print("="*60)
-        # print(f"📝 Total messages in result: {len(result['messages'])}")
+        print("\n" + "="*60)
+        print("📊 AGENT EXECUTION COMPLETE")
+        print("="*60)
+        print(f"📝 Total messages in result: {len(result['messages'])}")
 
-        # final_answer = "Hi, this is from agent response. MCP integration is in progress"
+        final_answer = "Hi, this is from agent response. MCP integration is in progress"
 
-        # for i, msg in enumerate(result["messages"]):
-        #     print(f"Message {i}: {type(msg).__name__}")
-        #     if isinstance(msg, AIMessage):
-        #         final_answer = msg.content
-        #         print(f"  ✅ Final answer extracted: {final_answer[:100]}...")
+        for i, msg in enumerate(result["messages"]):
+            print(f"Message {i}: {type(msg).__name__}")
+            if isinstance(msg, AIMessage):
+                final_answer = msg.content
+                print(f"  ✅ Final answer extracted: {final_answer[:100]}...")
 
-        # print(f"\n🎉 Returning response: {final_answer}\n")
-        return ChatResponse(response="Hi, this is from agent response. MCP integration is in progress")
+        print(f"\n🎉 Returning response: {final_answer}\n")
+        return ChatResponse(response=final_answer)
 
     except Exception as e:
         print(f"\n❌ ERROR in chat endpoint: {str(e)}\n")
@@ -266,4 +266,4 @@ def chat(request: ChatRequest):
 # Run with: uvicorn app:app --host 0.0.0.0 --port 8000
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8090)
+    uvicorn.run(app, host="0.0.0.0", port=8020)
