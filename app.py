@@ -31,7 +31,7 @@ if langsmith_api_key:
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
     os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
     os.environ["LANGCHAIN_API_KEY"] = langsmith_api_key
-    os.environ["LANGCHAIN_PROJECT"] = "fastapi-with-agent"
+    os.environ["LANGCHAIN_PROJECT"] = "agrigpt-backend-agent"
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8011")
@@ -214,7 +214,7 @@ def build_agent():
 
 # Build agent once at startup
 print("\n🚀 BUILDING AGENT AT STARTUP...")
-app_agent = build_agent()
+#app_agent = build_agent()
 print("✅ AGENT BUILD COMPLETE\n")
 
 # ============================================================
@@ -237,28 +237,33 @@ def chat(request: ChatRequest):
     print("🌟"*30 + "\n")
 
     try:
-        result = app_agent.invoke({
-            "messages": [HumanMessage(content=request.message)]
-        })
+        # result = app_agent.invoke({
+        #    "messages": [HumanMessage(content=request.message)]
+        # )
 
-        print("\n" + "="*60)
-        print("📊 AGENT EXECUTION COMPLETE")
-        print("="*60)
-        print(f"📝 Total messages in result: {len(result['messages'])}")
+        # print("\n" + "="*60)
+        # print("📊 AGENT EXECUTION COMPLETE")
+        # print("="*60)
+        # print(f"📝 Total messages in result: {len(result['messages'])}")
 
-        final_answer = ""
+        # final_answer = "Hi, this is from agent response. MCP integration is in progress"
 
-        for i, msg in enumerate(result["messages"]):
-            print(f"Message {i}: {type(msg).__name__}")
-            if isinstance(msg, AIMessage):
-                final_answer = msg.content
-                print(f"  ✅ Final answer extracted: {final_answer[:100]}...")
+        # for i, msg in enumerate(result["messages"]):
+        #     print(f"Message {i}: {type(msg).__name__}")
+        #     if isinstance(msg, AIMessage):
+        #         final_answer = msg.content
+        #         print(f"  ✅ Final answer extracted: {final_answer[:100]}...")
 
-        print(f"\n🎉 Returning response: {final_answer}\n")
-        return ChatResponse(response=final_answer)
+        # print(f"\n🎉 Returning response: {final_answer}\n")
+        return ChatResponse(response="Hi, this is from agent response. MCP integration is in progress")
 
     except Exception as e:
         print(f"\n❌ ERROR in chat endpoint: {str(e)}\n")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+        
+# Run with: uvicorn app:app --host 0.0.0.0 --port 8000
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8090)
