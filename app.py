@@ -36,7 +36,7 @@ if langsmith_api_key:
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "https://agrigpt-backend-mcp.onrender.com")
 MCP_API_KEY = os.getenv("MCP_API_KEY")
-MCP_TIMEOUT = 10.0
+MCP_TIMEOUT = 30.0  # Increased from 10.0 to 30.0 seconds for better reliability
 
 # ============================================================
 # MCP Client
@@ -179,7 +179,7 @@ def build_agent():
     print(f"🧰 Total tools created: {len(dynamic_tools)}")
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         temperature=0,
         google_api_key=GOOGLE_API_KEY
     )
@@ -279,10 +279,27 @@ def chat(request: ChatRequest):
         for i, msg in enumerate(result["messages"]):
             print(f"Message {i}: {type(msg).__name__}")
             if isinstance(msg, AIMessage):
-                final_answer = msg.content
-                print(f"  ✅ Final answer extracted: {final_answer[:100]}...")
+                # Handle both string and list responses from LLM
+                if isinstance(msg.content, str):
+                    # Content is already a string
+                    final_answer = msg.content
+                    print(f"  ✅ Final answer extracted (string): {final_answer[:100]}...")
+                elif isinstance(msg.content, list) and len(msg.content) > 0:
+                    # Content is a list of content blocks
+                    if isinstance(msg.content[0], dict) and 'text' in msg.content[0]:
+                        # Extract text from first content block
+                        final_answer = msg.content[0]['text']
+                        print(f"  ✅ Final answer extracted (from list): {final_answer[:100]}...")
+                    else:
+                        # Fallback: convert to string
+                        final_answer = str(msg.content[0])
+                        print(f"  ✅ Final answer extracted (converted): {final_answer[:100]}...")
+                else:
+                    # Fallback: convert entire content to string
+                    final_answer = str(msg.content)
+                    print(f"  ✅ Final answer extracted (fallback): {final_answer[:100]}...")
 
-        print(f"\n🎉 Returning response: {final_answer}\n")
+        print(f"\n🎉 Returning response: {str(final_answer)[:100]}\n")
         return ChatResponse(response=final_answer)
 
     except Exception as e:
